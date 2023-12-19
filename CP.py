@@ -1,29 +1,17 @@
 from ortools.linear_solver import pywraplp
 from ortools.sat.python import cp_model
 import numpy as np
-# N, D, A, B = list(map(int, input().split()))
-# """N=8
-#     D=6
-#     A=1
-#     B=3
-    
-#     1  -1
-#     3 -1
-#     4 -1
-#     5 -1
-#     2 4  -1
-#     -1
-#     -1
-#     3 -1"""
 
-# list_off= []
-# for i in range(N):
-#     mn= list(map(int, input().split()))
-#     list_off.append(mn[:-1])
-N, D, A, B = 8, 6, 1, 3
-list_off= [[1], [3], [4], [5], [2, 4], [], [], [3]]
+def read_input():
+    N, D, A, B = map(int, input().split())
+    days_off = []
 
+    for _ in range(N):
+        days = list(map(int, input().split()))[:-1]
+        days_off.append(days)
+    return N, D, A, B, days_off
 
+N, D, A, B, list_off = read_input()
 
 # Create the solver
 model = cp_model.CpModel()
@@ -34,31 +22,32 @@ for i in range(N):
     X.append([])
     for d in range(D):
         X[i].append([])
-        if d+1 in list_off[i]:
-            for k in range(4):  # 4 shifts per day
-                X[i][d].append(model.NewIntVar(0, 0, f'X[{i}][{d}][{k}]'))
-        else:
-            for k in range(4):  # 4 shifts per day
-                X[i][d].append(model.NewIntVar(0, 1, f'X[{i}][{d}][{k}]'))
-
-for i in range(N):
-    for d in range(D):
-        model.Add(sum(X[i][d][k] for k in range(4)) <= 1)
-
-# Constraint 2: If an employee works the night shift on day d, they must have a day off on the entire next day (d+1)
-for d in range(0, D-1):  # Start from the second day, as there is no "tomorrow" for the last day
-    for i in range(N):
-        model.Add(X[i][d][3] + X[i][d+1][0] <= 1)
-        model.Add(X[i][d][3] + X[i][d+1][1] <= 1)
-        model.Add(X[i][d][3] + X[i][d+1][2] <= 1)
-        model.Add(X[i][d][3] + X[i][d+1][3] <= 1)
+        for k in range(4):  # 4 shifts per day
+            X[i][d].append(model.NewBoolVar(f'X[{i}][{d}][{k}]'))
 
 # Constraint 1: Each day must have shifts for at least A and at most B employees
+# Constraint 2: Employee can take the next day of if they work night shift today
+for i in range(N):
+    for d in range(D):
+        if(d>=1):
+            model.Add(sum(X[i][d][k] for k in range(4)) == 0).OnlyEnforceIf(X[i][d-1][3])
+            if(d+1 not in list_off[i]):
+                model.Add(sum(X[i][d][k] for k in range(4)) == 1).OnlyEnforceIf(X[i][d-1][3].Not())
+        else:
+            if(d+1 not in list_off[i]):
+                model.Add(sum(X[i][d][k] for k in range(4)) == 1)
+
+# Contraint 3: Every shift in every day have minimum A and maximum 4 employees
 for d in range(D):
     for k in range(4):
         model.Add(sum(X[i][d][k] for i in range(N)) >= A)
         model.Add(sum(X[i][d][k] for i in range(N)) <= B)
 
+# Contraint 4: List of employee's day off
+for i in range(N):
+    for d in range(D):
+        if d+1 in list_off[i]:
+            model.Add(sum(X[i][d][k] for k in range(4)) == 0)
 
 # Objective: Minimize the maximum number of night shifts assigned to any employee
 max_night_shifts = model.NewIntVar(0, D, 'max_night_shifts')
@@ -77,7 +66,6 @@ solver.parameters.enumerate_all_solutions = True
 status = solver.Solve(model)
 # Print the solution
 if status == cp_model.OPTIMAL:
-
     # Print the schedule
     for i in range(N):
         for d in range(D):
@@ -92,14 +80,3 @@ if status == cp_model.OPTIMAL:
 
 else:
     print('No solution found.')
-
-    """
-    0 4 0 3 2 2 
-    1 1 0 4 0 2 
-    1 3 2 0 3 3 
-    3 1 3 1 0 1 
-    4 0 1 0 1 4 
-    2 2 4 0 3 1 
-    3 3 2 2 4 0 
-    2 2 0 2 1 3 
-    """
