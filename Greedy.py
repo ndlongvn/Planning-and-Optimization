@@ -70,7 +70,7 @@ def read_input_from_file(file_path):
             days_off.append(days)
     return N, D, A, B, days_off
 
-file_path = 'Planning-and-Optimization\\res\input_N_8_D_6.txt'  
+file_path = 'res\input_N_8_D_6.txt'  
 N, D, A, B, list_off = read_input_from_file(file_path)
 
 # def read_input():
@@ -85,5 +85,5 @@ N, D, A, B, list_off = read_input_from_file(file_path)
 
 X = generate_random_solution(N, D, A, B, list_off)
 X = greedy_construction(X, N, D, A, B, list_off)
-# X = local_search(X, N, D, A, B, list_off)
+X = local_search(X, N, D, A, B, list_off)
 print_solution(X)

@@ -64,7 +64,7 @@ def shift_scheduling(N, D, A, B, leave_days):
         print("No solution found.")
 
 # Read input from file
-with open('Planning-and-Optimization\\res\input_N_8_D_6.txt', 'r') as input_file:
+with open('res\input_N_8_D_6.txt', 'r') as input_file:
     N, D, A, B = map(int, input_file.readline().split())
     leave_days = []
     for _ in range(N):
