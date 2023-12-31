@@ -1,89 +1,57 @@
 import random
-import numpy as np
 
-def generate_random_solution(N, D, A, B, days_off):
-  X = np.zeros((N, D), dtype=int)
-  for i in range(N):
-    for d in range(D):
-      if d+1 not in days_off[i]:
-        X[i][d] = random.randint(0, 4)
-  return X
+def greedy_shift_scheduling(N, D, A, B, day_off):
+    schedule = [[0] * D for _ in range(N)]  # Initialize the schedule matrix
+    night_shift_count = [0] * N  # Initialize night shift count for each employee
 
-def evaluate_solution(X):
-  max_night_shifts = 0
-  for i in range(X.shape[0]):
-    max_night_shifts = max(max_night_shifts, sum(X[i] == 4))
-  return max_night_shifts
+    for day in range(D):
+        if day == 0:
+            # Assign night shifts to random employees without day-off on the first day
+            night_shift_assignments = random.sample(
+                [i for i in range(N) if day + 1 not in day_off[i]], A
+            )
+            for emp in night_shift_assignments:
+                schedule[emp][day] = 4
+                night_shift_count[emp] += 1
 
-def greedy_construction(X, N, D, A, B, days_off):
-  for i in range(N):
-    for d in range(D):
-      if X[i][d] == 0 and d+1 not in days_off[i]:
-        # Try all possible shifts for the employee
-        for k in range(1, 5):
-          X_temp = np.copy(X)
-          X_temp[i][d] = k
-          if is_feasible(X_temp, N, D, A, B):
-            X = X_temp
-            break
-  return X
+            # Assign remaining shifts 1, 2, 3
+            remaining_employees = [i for i in range(N) if day + 1 not in day_off[i] and schedule[i][day] != 4]
+            random.shuffle(remaining_employees)
+            for i, emp in enumerate(remaining_employees):
+                shift = (i % 3) + 1
+                schedule[emp][day] = shift
 
-def is_feasible(X, N, D, A, B):
-  # Check if each employee is assigned to at least one shift per day
-  for i in range(N):
-    if sum(X[i]) == 0:
-      return False
+        else:
+            # Check if the day before an employee did a night shift
+            for emp in range(N):
+                if schedule[emp][day - 1] == 4:
+                    # Let that employee take the current day off
+                    schedule[emp][day] = 0
 
-  # Check if each shift has at least A and at most B employees
-  for d in range(D):
-    for k in range(1, 5):
-      if sum(X[:, d] == k) < A or sum(X[:, d] == k) > B:
-        return False
+            # Assign night shifts to employees with the smallest count of night shifts
+            eligible_employees = [i for i in range(N) if day + 1 not in day_off[i] and schedule[i][day - 1] != 4]
+            eligible_employees.sort(key=lambda emp: night_shift_count[emp])
 
-  return True
+            for i in range(1, A+1):
+                emp = eligible_employees[i]
+                schedule[emp][day] = 4
+                night_shift_count[emp] += 1
 
-def local_search(X, N, D, A, B, days_off):
-  for _ in range(1000):
-    i, j = random.randint(0, N-1), random.randint(0, D-1)
-    k, l = random.randint(1, 4), random.randint(1, 4)
-    if i != j or k != l:
-      X_temp = np.copy(X)
-      X_temp[i][j], X_temp[i][l] = X_temp[i][l], X_temp[i][j]
-      if is_feasible(X_temp, N, D, A, B):
-        X = X_temp
+            # Assign remaining shifts 1, 2, 3
+            remaining_employees = [i for i in range(N) if day + 1 not in day_off[i] and schedule[i][day - 1] != 4 and schedule[i][day] != 4]
+            random.shuffle(remaining_employees)
+            for i, emp in enumerate(remaining_employees):
+                shift = (i % 3) + 1
+                if schedule[emp][day] == 0:
+                    schedule[emp][day] = shift
 
-  return X
+    return schedule
 
-def print_solution(X):
-  for row in X:
-    for val in row:
-      print(val, end=" ")
-    print()
-    
-def read_input_from_file(file_path):
-    with open(file_path, 'r') as file:
-        N, D, A, B = map(int, file.readline().split())
-        days_off = []
+# Input
+N, D, A, B = map(int, input().split())
+day_off = [list(map(int, input().split()[:-1])) for _ in range(N)]
 
-        for _ in range(N):
-            days = list(map(int, file.readline().split()))[:-1]
-            days_off.append(days)
-    return N, D, A, B, days_off
-
-file_path = 'res\input_N_8_D_6.txt'  
-N, D, A, B, list_off = read_input_from_file(file_path)
-
-# def read_input():
-#   N, D, A, B = map(int, input().split())
-#   days_off = []
-
-#   for _ in range(N):
-#     days = list(map(int, input().split()))[:-1]
-#     days_off.append(days)
-#   return N, D, A, B, days_off
-# N, D, A, B, list_off = read_input()
-
-X = generate_random_solution(N, D, A, B, list_off)
-X = greedy_construction(X, N, D, A, B, list_off)
-X = local_search(X, N, D, A, B, list_off)
-print_solution(X)
+# Solve and output the result
+result = greedy_shift_scheduling(N, D, A, B, day_off)
+for row in result:
+    print(*row)
