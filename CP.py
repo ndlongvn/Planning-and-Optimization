@@ -25,8 +25,8 @@ for i in range(N):
         for k in range(4):  # 4 shifts per day
             X[i][d].append(model.NewBoolVar(f'X[{i}][{d}][{k}]'))
 
-# Constraint 1: Each day must have shifts for at least A and at most B employees
-# Constraint 2: Employee can take the next day of if they work night shift today
+# Constraint 1: Employee can take the next day of if they work night shift today
+# Constraint 2: Each employee only work at max 1 shift per day
 for i in range(N):
     for d in range(D):
         if(d>=1):
