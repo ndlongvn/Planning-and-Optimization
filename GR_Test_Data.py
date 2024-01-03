@@ -30,19 +30,19 @@ def greedy_shift_scheduling(N, D, A, B, day_off):
                 schedule[emp][day] = shift
 
         else:
-            minimum_night_shift = sum([1 for d in day_off if d == day + 1])
+            leave_count = sum([1 for d in day_off if d == day + 1])
             # Check if the day before an employee did a night shift
             for emp in range(N):
                 if schedule[emp][day - 1] == 4:
                     # Let that employee take the current day off
                     schedule[emp][day] = 0
-                    if day + 1  not in day_off[emp]: minimum_night_shift += 1
+                    if day + 1  not in day_off[emp]: leave_count += 1
             # No solution found
-            if N > 4*B + minimum_night_shift: return [[0] * D for _ in range(N)] 
+            if N > 4*B + leave_count: return [[0] * D for _ in range(N)] 
             
             # Least amount of night shift required    
             minimum_night_shift = max(
-                A, N - minimum_night_shift - B * 3
+                A, N - leave_count - B * 3
             )
             # Assign night shifts to employees with the smallest count of night shifts
             eligible_employees = [i for i in range(N) if day + 1 not in day_off[i] and schedule[i][day - 1] != 4]
