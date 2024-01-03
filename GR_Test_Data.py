@@ -1,4 +1,5 @@
 import random
+import timeit
 
 def greedy_shift_scheduling(N, D, A, B, day_off):
     schedule = [[0] * D for _ in range(N)]  # Initialize the schedule matrix
@@ -62,11 +63,22 @@ def greedy_shift_scheduling(N, D, A, B, day_off):
 
     return schedule
 
-# Input
-N, D, A, B = map(int, input().split())
-day_off = [list(map(int, input().split()[:-1])) for _ in range(N)]
+# Read input from file
+with open('res\input_N_400_D_50.txt', 'r') as f:
+    N, D, A, B = map(int, f.readline().split())
+    day_off = [list(map(int, line.split()[:-1])) for line in f.readlines()]
 
-# Solve and output the result
+# Solve and measure runtime
+start_time = timeit.default_timer()
 result = greedy_shift_scheduling(N, D, A, B, day_off)
-for row in result:
-    print(*row)
+end_time = timeit.default_timer()
+runtime = end_time - start_time
+
+# Write output to file
+with open('output.txt', 'w') as f:
+    if result == [[0] * D for _ in range(N)]: 
+        f.write('No solution found' + '\n')
+    else:
+        for row in result:
+            f.write(' '.join(map(str, row)) + '\n')
+        f.write(f'Runtime: {runtime * 1000:.5f} milliseconds\n')
