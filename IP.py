@@ -2,28 +2,12 @@
 from ortools.linear_solver import pywraplp
 import numpy as np
 N, D, A, B = list(map(int, input().split()))
-# """N=8
-#     D=6
-#     A=1
-#     B=3
-    
-#     1  -1
-#     3 -1
-#     4 -1
-#     5 -1
-#     2 4  -1
-#     -1
-#     -1
-#     3 -1"""
 
 list_off= []
 for i in range(N):
     mn= list(map(int, input().split()))
     list_off.append(mn[:-1])
-# N, D, A, B = 8, 6, 1, 3
-# list_off= [[1], [3], [4], [5], [2, 4], [], [], [3]]
-# print(list_off)
-# Create a solver
+    
 solver = pywraplp.Solver.CreateSolver('SCIP')
 
 
